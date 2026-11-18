@@ -1,0 +1,27 @@
+# UNVERIFIED: this workflow has never run. Linux only, matching the implemented adapter.
+name: ci
+on: [push, pull_request]
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cmake g++ binutils
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+      - name: ASan+UBSan
+        run: |
+          cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DCRASHSIGHT_SANITIZE=ON
+          cmake --build build-asan
+          ASAN_OPTIONS=handle_segv=0 ctest --test-dir build-asan --output-on-failure
+  backend-and-e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: sudo apt-get update && sudo apt-get install -y g++ binutils curl
+      - run: scripts/build_native.sh debug
+      - run: cd backend && python3 -m unittest discover -s tests -v
+      - run: scripts/e2e_demo.sh

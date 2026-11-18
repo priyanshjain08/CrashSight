@@ -1,0 +1,10 @@
+# UNVERIFIED (never run). Uses SQLite on a volume - NOT PostgreSQL (see README "Deviations").
+services:
+  crashsight:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      CRASHSIGHT_ADMIN_TOKEN: ${CRASHSIGHT_ADMIN_TOKEN:?set in .env}
+    volumes: ["crashsight-data:/data"]
+volumes:
+  crashsight-data:
